@@ -46,8 +46,16 @@ fi
 
 # Install NVIDIA Container Runtime (should be pre-installed on JetPack)
 echo "[4/8] Configuring NVIDIA Container Runtime..."
-sudo apt-get install -y nvidia-docker2
-sudo systemctl restart docker
+# Check if nvidia runtime is already configured
+if docker info 2>/dev/null | grep -q "nvidia"; then
+    echo "NVIDIA Container Runtime already configured"
+else
+    echo "Installing nvidia-docker2..."
+    sudo apt-get install -y nvidia-docker2 || {
+        echo "Warning: nvidia-docker2 not available. NVIDIA runtime may already be configured via nvidia-container-toolkit."
+    }
+    sudo systemctl restart docker
+fi
 
 # Install system dependencies
 echo "[5/8] Installing system dependencies..."
