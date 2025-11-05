@@ -1,0 +1,62 @@
+# Vision Module Configuration
+
+camera:
+  # Camera device index (0 for default camera)
+  device_index: 0
+
+  # Camera resolution
+  width: 640
+  height: 640
+
+  # Frame rate
+  fps: 30
+
+  # Camera type: 'usb' or 'csi'
+  type: usb
+
+model:
+  # Path to YOLO model (TensorRT engine preferred)
+  path: /models/yolov8n.engine
+
+  # Model input size
+  input_size: 640
+
+  # Detection confidence threshold
+  confidence_threshold: 0.5
+
+  # IoU threshold for NMS
+  iou_threshold: 0.45
+
+  # Only detect persons (class 0 in COCO)
+  classes: [0]
+
+tracking:
+  # Enable multi-object tracking
+  enabled: true
+
+  # Tracking algorithm: 'botsort' or 'bytetrack'
+  algorithm: bytetrack
+
+  # Maximum age of tracks (frames)
+  max_age: 30
+
+performance:
+  # Process every N frames (1 = process all frames)
+  skip_frames: 1
+
+  # Batch size for inference
+  batch_size: 1
+
+  # Use FP16 precision
+  fp16: true
+
+redis:
+  # Redis connection
+  host: redis
+  port: 6379
+
+  # Stream name for publishing detections
+  stream: "stream:detections"
+
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR

@@ -1,0 +1,66 @@
+# Orchestrator Configuration
+
+gpio:
+  # GPIO pin number (BOARD numbering)
+  relay_pin: 7
+
+  # Active high or low
+  active_high: true
+
+  # Duration to keep relay active (seconds)
+  trigger_duration: 5.0
+
+  # Cooldown period between triggers (seconds)
+  cooldown_period: 2.0
+
+correlation:
+  # Maximum time difference for event correlation (seconds)
+  max_time_diff: 1.0
+
+  # Buffer size for event correlation
+  buffer_size: 100
+
+  # Minimum confidence for action trigger
+  min_confidence: 0.7
+
+safety:
+  # Require manual confirmation before triggering
+  require_confirmation: false
+
+  # Maximum triggers per minute (rate limiting)
+  max_triggers_per_minute: 10
+
+  # Enable audit logging to database
+  enable_audit_log: true
+
+  # Emergency stop (disable all GPIO triggers)
+  emergency_stop: false
+
+database:
+  # SQLite database path
+  path: /logs/events.db
+
+  # Enable event logging
+  enabled: true
+
+redis:
+  # Redis connection
+  host: redis
+  port: 6379
+
+  # Stream names to monitor
+  streams:
+    detections: "stream:detections"
+    transcriptions: "stream:transcriptions"
+    speakers: "stream:speakers"
+    sentiment: "stream:sentiment"
+    actions: "stream:actions"
+
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+
+  # Log to file
+  file: /logs/orchestrator.log
+
+  # Log format
+  format: "[%(asctime)s] %(levelname)s - %(message)s"

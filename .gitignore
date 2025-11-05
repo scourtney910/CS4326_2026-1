@@ -205,3 +205,34 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Jetson Multi-Modal Framework Specific
+
+# Models (too large for git)
+shared/models/*.pt
+shared/models/*.pth
+shared/models/*.onnx
+shared/models/*.engine
+shared/models/*.gguf
+shared/models/*.bin
+
+# Data
+shared/data/video/*
+shared/data/audio/*
+!shared/data/.gitkeep
+
+# Logs
+shared/logs/*.log
+shared/logs/*.db
+!shared/logs/.gitkeep
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

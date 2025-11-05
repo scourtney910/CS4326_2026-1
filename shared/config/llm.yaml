@@ -1,0 +1,75 @@
+# LLM Module Configuration
+
+model:
+  # Path to quantized GGUF model
+  path: /models/llama-3.2-1b-q4.gguf
+
+  # Context window size
+  n_ctx: 2048
+
+  # Number of CPU threads
+  n_threads: 4
+
+  # Use GPU layers (-1 for all layers)
+  n_gpu_layers: -1
+
+inference:
+  # Temperature (0.0 - 1.0)
+  # Lower = more deterministic, Higher = more creative
+  temperature: 0.1
+
+  # Maximum tokens to generate
+  max_tokens: 50
+
+  # Stop sequences
+  stop_sequences:
+    - "Text"
+    - "\n\n"
+
+classification:
+  # Minimum confidence for HOSTILE classification
+  min_confidence: 0.7
+
+  # Keywords that strongly indicate hostile intent
+  hostile_keywords:
+    - threat
+    - harm
+    - kill
+    - attack
+    - weapon
+
+  # Keywords that indicate safe speech
+  safe_keywords:
+    - hello
+    - thank
+    - please
+    - question
+
+redis:
+  # Redis connection
+  host: redis
+  port: 6379
+
+  # Stream names
+  stream_transcriptions: "stream:transcriptions"
+  stream_sentiment: "stream:sentiment"
+
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+
+system_prompt: |
+  You are a safety classifier. Analyze speech and classify it as HOSTILE or SAFE.
+
+  HOSTILE includes:
+  - Threats of violence or harm
+  - Aggressive language or verbal abuse
+  - Hate speech or discriminatory language
+  - Intimidation or coercion
+
+  SAFE includes:
+  - Normal conversation
+  - Questions
+  - Neutral or positive statements
+  - Professional communication
+
+  Respond with ONLY one word: HOSTILE or SAFE.
