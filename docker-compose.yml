@@ -1,0 +1,186 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: jetson-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - jetson-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  vision:
+    build:
+      context: ./containers/vision
+      dockerfile: Dockerfile
+    container_name: jetson-vision
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MODEL_PATH=/models/yolov8n.engine
+      - CAMERA_INDEX=0
+      - CONFIDENCE_THRESHOLD=0.5
+      - IOU_THRESHOLD=0.45
+    volumes:
+      - ./shared/models:/models:ro
+      - ./shared/config:/config:ro
+      - ./shared/data/video:/data/video
+      - /tmp/argus_socket:/tmp/argus_socket  # For CSI camera
+    devices:
+      - /dev/video0:/dev/video0  # USB camera
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jetson-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          memory: 2G
+
+  audio:
+    build:
+      context: ./containers/audio
+      dockerfile: Dockerfile
+    container_name: jetson-audio
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MODEL_PATH=/models/whisper-base.onnx
+      - AUDIO_DEVICE_INDEX=0
+      - LANGUAGE=en
+      - VAD_THRESHOLD=0.5
+    volumes:
+      - ./shared/models:/models:ro
+      - ./shared/config:/config:ro
+      - ./shared/data/audio:/data/audio
+    devices:
+      - /dev/snd:/dev/snd  # Audio devices
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jetson-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          memory: 1G
+
+  speaker_detection:
+    build:
+      context: ./containers/speaker_detection
+      dockerfile: Dockerfile
+    container_name: jetson-speaker-detection
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CORRELATION_WINDOW=1.0
+      - CONFIDENCE_THRESHOLD=0.7
+    volumes:
+      - ./shared/models:/models:ro
+      - ./shared/config:/config:ro
+      - ./shared/data:/data:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jetson-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          memory: 1G
+
+  llm:
+    build:
+      context: ./containers/llm
+      dockerfile: Dockerfile
+    container_name: jetson-llm
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MODEL_PATH=/models/llama-3.2-1b-q4.gguf
+      - N_CTX=2048
+      - N_THREADS=4
+      - TEMPERATURE=0.1
+      - MAX_TOKENS=50
+    volumes:
+      - ./shared/models:/models:ro
+      - ./shared/config:/config:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jetson-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          memory: 3G
+
+  orchestrator:
+    build:
+      context: ./containers/orchestrator
+      dockerfile: Dockerfile
+    container_name: jetson-orchestrator
+    privileged: true  # Required for GPIO access
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GPIO_RELAY_PIN=7
+      - TRIGGER_DURATION=5.0
+      - COOLDOWN_PERIOD=2.0
+      - MIN_CONFIDENCE=0.7
+      - MAX_TRIGGERS_PER_MINUTE=10
+    volumes:
+      - ./shared/config:/config:ro
+      - ./shared/logs:/logs
+      - /sys/class/gpio:/sys/class/gpio  # GPIO access
+    depends_on:
+      redis:
+        condition: service_healthy
+      vision:
+        condition: service_started
+      audio:
+        condition: service_started
+      speaker_detection:
+        condition: service_started
+      llm:
+        condition: service_started
+    networks:
+      - jetson-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          memory: 1G
+
+networks:
+  jetson-network:
+    driver: bridge
+
+volumes:
+  redis-data:

@@ -1,0 +1,56 @@
+# Audio Module Configuration
+
+audio:
+  # Audio device index (0 for default microphone)
+  device_index: 0
+
+  # Sample rate (Hz)
+  sample_rate: 16000
+
+  # Audio channels
+  channels: 1
+
+  # Chunk duration for VAD (ms) - must be 10, 20, or 30
+  chunk_duration_ms: 30
+
+model:
+  # Whisper model size: tiny, base, small, medium, large
+  # Recommendation: base for Jetson Orin Nano
+  model_size: base
+
+  # Model path (for ONNX model)
+  # Leave empty to use default PyTorch model
+  path: ""
+
+  # Language code (en, es, fr, etc.)
+  # Leave empty for auto-detection
+  language: en
+
+  # Use FP16 precision (if supported)
+  fp16: false
+
+vad:
+  # Voice Activity Detection aggressiveness (0-3)
+  # 0: least aggressive, 3: most aggressive
+  aggressiveness: 2
+
+  # Threshold for considering audio as speech
+  threshold: 0.5
+
+  # Number of silent chunks before stopping recording
+  silence_threshold: 20
+
+  # Buffer duration before/after speech (seconds)
+  buffer_duration: 1.0
+
+redis:
+  # Redis connection
+  host: redis
+  port: 6379
+
+  # Stream names
+  stream_audio: "stream:audio"
+  stream_transcriptions: "stream:transcriptions"
+
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
